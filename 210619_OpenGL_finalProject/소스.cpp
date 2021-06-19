@@ -74,11 +74,11 @@ void display() {
 }
 
 void cameraControl() {
-	if (isKey1Pressed) {
-		glRotatef(key1CamRotateAngle, 0, 1, 0);
-		gluLookAt(key1CamRotateAngle / 2, 0, key1CamZdist, 0, 0, 0, key1CamXvec, 1, 0);
-		reverseRotatef(key1CamRotateAngle, 0, 1, 0);
+	glRotatef(key1CamRotateAngle, 0, 1, 0);
+	gluLookAt(key1CamRotateAngle / 2, 0, key1CamZdist, 0, 0, 0, key1CamXvec, 1, 0);
+	reverseRotatef(key1CamRotateAngle, 0, 1, 0);
 
+	if (isKey1Pressed) {
 		if (key1CamZdistIncreasing) {
 			key1CamZdist += 0.1;
 
@@ -143,18 +143,12 @@ void cameraControl() {
 			}
 		}
 	}
-
-
-	else {
-		gluLookAt(0, 0, key1CamZdist, 0, 0, 0, key1CamXvec, 1, 0);
-	}
 }
 
 void keyboard(unsigned char key, int x, int y) {
 	if (key == '1') {
 		isKey1Pressed = !isKey1Pressed;
 	}
-
 }
 
 void dirKeyboard(int key, int x, int y) {
@@ -162,6 +156,7 @@ void dirKeyboard(int key, int x, int y) {
 		isKey1Pressed = false;
 		key1CamZdist = 20;
 		key1CamXvec = 0;
+		key1CamRotateAngle = 0;
 	}
 }
 
