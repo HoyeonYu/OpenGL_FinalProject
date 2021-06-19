@@ -82,7 +82,7 @@ void display() {
 
 void cameraControl() {
 	glRotatef(key1CamRotateAngle, 0, 1, 0);
-	gluLookAt(key1CamRotateAngle / 2, 0, key1CamZdist, 0, 0, 0, key1CamXvec, 1, 0);
+	gluLookAt(0, key1CamRotateAngle / 4, key1CamZdist, 0, 0, 0, key1CamXvec, 1, 0);
 	reverseRotatef(key1CamRotateAngle, 0, 1, 0);
 
 	if (isKey1Pressed) {
@@ -422,15 +422,11 @@ void drawName() {
 		reverseTranslatef(secondCenterX + 1.4375, secondCenterY - 3.5, secondCenterZ);
 	}
 
-	{	// plane
+	{	// Background
 		glTranslatef(0, 0, -10);
-		glScalef(30, 30, 0.5);
-		glColor3f(1, 1, 1);
-		glutSolidCube(1);
-		glColor3f(0, 0, 0);
-		glutWireCube(1);
-		reverseScalef(30, 30, 0.5);
-		reverseTranslatef(0, 0, -20);
+
+		gluQuadricDrawStyle(gluNewQuadric(), GLU_FILL);
+		gluCylinder(gluNewQuadric(), 15, 25, 35, 20, 20);
 	}
 }
 
