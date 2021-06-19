@@ -10,12 +10,21 @@ using namespace std;
 
 void init();
 void resize(int w, int h);
+void cameraControl();
 void display();
+void keyboard(unsigned char key, int x, int y);
+void dirKeyboard(int key, int x, int y);
 void drawAssistantLine();
 void drawName();
 void reverseTranslatef(float x, float y, float z);
 void reverseRotatef(float angle, float x, float y, float z);
 void reverseScalef(float x, float y, float z);
+
+bool isKey1Pressed = false;
+float key1CamZdist = 20, key1CamXvec = 0, key1CamRotateAngle = 0;
+bool key1CamZdistIncreasing = false;
+bool key1CamXvecIncreasing = false;
+bool key1CamRotateAngleIncreasing = false;
 
 int main(int argc, char** argv) {
 	glutInit(&argc, argv);
@@ -25,6 +34,8 @@ int main(int argc, char** argv) {
 	glutCreateWindow("Final Project");
 	init();
 	glutReshapeFunc(resize);
+	glutKeyboardFunc(keyboard);
+	glutSpecialFunc(dirKeyboard);
 	glutDisplayFunc(display);
 	glutMainLoop();
 
@@ -40,6 +51,7 @@ void resize(int w, int h) {
 	glViewport(0, 0, w, h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
+
 	gluPerspective(90, 1, 5, 30);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -50,11 +62,107 @@ void display() {
 	glEnable(GL_DEPTH_TEST);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	gluLookAt(0, 0, 10, 0, 0, 0, 0, 1, 0);
+
+	cameraControl();
+
+
 	drawAssistantLine();
 	drawName();
 
 	glutSwapBuffers();
+	glutPostRedisplay();
+}
+
+void cameraControl() {
+	if (isKey1Pressed) {
+		glRotatef(key1CamRotateAngle, 0, 1, 0);
+		gluLookAt(key1CamRotateAngle / 2, 0, key1CamZdist, 0, 0, 0, key1CamXvec, 1, 0);
+		reverseRotatef(key1CamRotateAngle, 0, 1, 0);
+
+		if (key1CamZdistIncreasing) {
+			key1CamZdist += 0.1;
+
+			if (key1CamZdist > 20) {
+				key1CamZdistIncreasing = false;
+			}
+
+			if (key1CamRotateAngleIncreasing) {
+				key1CamRotateAngle += 0.5;
+
+				if (key1CamRotateAngle > 20) {
+					key1CamRotateAngleIncreasing = false;
+				}
+			}
+
+			else {
+				key1CamRotateAngle -= 0.5;
+
+				if (key1CamRotateAngle < -20) {
+					key1CamRotateAngleIncreasing = true;
+				}
+			}
+		}
+
+		else {
+			key1CamZdist -= 0.1;
+
+			if (key1CamZdist < 10) {
+				key1CamZdistIncreasing = true;
+			}
+
+			if (key1CamRotateAngleIncreasing) {
+				key1CamRotateAngle += 0.5;
+
+				if (key1CamRotateAngle > 20) {
+					key1CamRotateAngleIncreasing = false;
+				}
+			}
+
+			else {
+				key1CamRotateAngle -= 0.5;
+
+				if (key1CamRotateAngle < -20) {
+					key1CamRotateAngleIncreasing = true;
+				}
+			}
+		}
+
+		if (key1CamXvecIncreasing) {
+			key1CamXvec += 0.02;
+
+			if (key1CamXvec > 0.5) {
+				key1CamXvecIncreasing = false;
+			}
+		}
+
+		else {
+			key1CamXvec -= 0.02;
+
+			if (key1CamXvec < -0.5) {
+				key1CamXvecIncreasing = true;
+			}
+		}
+	}
+
+
+	else {
+		gluLookAt(0, 0, key1CamZdist, 0, 0, 0, key1CamXvec, 1, 0);
+	}
+}
+
+void keyboard(unsigned char key, int x, int y) {
+	if (key == '1') {
+		isKey1Pressed = !isKey1Pressed;
+	}
+
+}
+
+void dirKeyboard(int key, int x, int y) {
+	if (key == GLUT_KEY_HOME) {
+		isKey1Pressed = false;
+		key1CamZdist = 20;
+		key1CamXvec = 0;
+	}
 }
 
 void drawAssistantLine() {
@@ -200,7 +308,6 @@ void drawName() {
 		reverseTranslatef(secondCenterX + 1.4375, secondCenterY - 3.5, secondCenterZ);
 
 	}
-
 }
 
 void reverseTranslatef(float x, float y, float z) {
