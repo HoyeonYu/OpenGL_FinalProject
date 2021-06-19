@@ -11,6 +11,8 @@ using namespace std;
 void init();
 void resize(int w, int h);
 void cameraControl();
+void lightInit();
+void lightControl(int lightSourceType);
 void display();
 void keyboard(unsigned char key, int x, int y);
 void dirKeyboard(int key, int x, int y);
@@ -25,6 +27,9 @@ float key1CamZdist = 20, key1CamXvec = 0, key1CamRotateAngle = 0;
 bool key1CamZdistIncreasing = false;
 bool key1CamXvecIncreasing = false;
 bool key1CamRotateAngleIncreasing = false;
+
+bool isKey2Pressed = false;
+int lightSourceType = 3;
 
 int main(int argc, char** argv) {
 	glutInit(&argc, argv);
@@ -60,11 +65,13 @@ void resize(int w, int h) {
 void display() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
+	lightInit();
+
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
 	cameraControl();
-
+	lightControl(lightSourceType);
 
 	drawAssistantLine();
 	drawName();
@@ -145,9 +152,119 @@ void cameraControl() {
 	}
 }
 
+void lightInit() {
+	glEnable(GL_LIGHTING);
+
+	GLfloat light0_ambient[] = { 1, 0, 0, 1 };
+	GLfloat light0_diffuse[] = { 1, 0, 0, 1 };
+	GLfloat light0_specular[] = { 1, 0, 0, 1 };
+
+	glEnable(GL_LIGHT0);
+	glLightfv(GL_LIGHT0, GL_AMBIENT, light0_ambient);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
+	glLightfv(GL_LIGHT0, GL_SPECULAR, light0_specular);
+
+	GLfloat light1_ambient[] = { 0, 0, 1, 1 };
+	GLfloat light1_diffuse[] = { 0, 0, 1, 1 };
+	GLfloat light1_specular[] = { 0, 0, 1, 1 };
+
+	glEnable(GL_LIGHT1);
+	glLightfv(GL_LIGHT1, GL_AMBIENT, light1_ambient);
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, light1_diffuse);
+	glLightfv(GL_LIGHT1, GL_SPECULAR, light1_specular);
+
+	GLfloat light2_ambient[] = { 0, 1, 0, 1 };
+	GLfloat light2_diffuse[] = { 0, 1, 0, 1 };
+	GLfloat light2_specular[] = { 0, 1, 0, 1 };
+
+	glEnable(GL_LIGHT2);
+	glLightfv(GL_LIGHT2, GL_AMBIENT, light2_ambient);
+	glLightfv(GL_LIGHT2, GL_DIFFUSE, light2_diffuse);
+	glLightfv(GL_LIGHT2, GL_SPECULAR, light2_specular);
+}
+
+void lightControl(int lightSourceType) {
+	float lightSource0Position[] = { -20, -10, 20, 1 };
+	float lightSource1Position[] = { 20, -10, 20, 1 };
+	float lightSource2Position[] = { 0, 10, 20, 1 };
+
+	if (lightSourceType == 3) {
+		// Point Light
+		glLightfv(GL_LIGHT0, GL_POSITION, lightSource0Position);
+		glLightf(GL_LIGHT0, GL_SPOT_CUTOFF, 180);
+		glLightf(GL_LIGHT0, GL_SPOT_EXPONENT, 0);
+
+		glLightfv(GL_LIGHT1, GL_POSITION, lightSource1Position);
+		glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, 180);
+		glLightf(GL_LIGHT1, GL_SPOT_EXPONENT, 0);
+
+		glLightfv(GL_LIGHT2, GL_POSITION, lightSource2Position);
+		glLightf(GL_LIGHT2, GL_SPOT_CUTOFF, 180);
+		glLightf(GL_LIGHT2, GL_SPOT_EXPONENT, 0);
+	}
+
+	if (lightSourceType == 4) {
+		// Directional Light
+		lightSource0Position[3] = 0;
+		glRotatef(45, 1, 0, -1);
+		glLightfv(GL_LIGHT0, GL_POSITION, lightSource0Position);
+		glLightf(GL_LIGHT0, GL_SPOT_CUTOFF, 180);
+		reverseRotatef(45, 1, 0, -1);
+
+		lightSource1Position[3] = 0;
+		glRotatef(45, -1, 0, -1);
+		glLightfv(GL_LIGHT1, GL_POSITION, lightSource1Position);
+		glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, 180);
+		reverseRotatef(45, -1, 0, -1);
+
+		lightSource2Position[3] = 0;
+		glRotatef(45, -1, 0, -1);
+		glLightfv(GL_LIGHT2, GL_POSITION, lightSource2Position);
+		glLightf(GL_LIGHT2, GL_SPOT_CUTOFF, 180);
+		reverseRotatef(45, -1, 0, -1);
+	}
+
+	if (lightSourceType == 5) {
+		// Spot Light
+		float spotLight0Direction[] = { 1, 0.5, -1 };
+		glLightfv(GL_LIGHT0, GL_POSITION, lightSource0Position);
+		glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, spotLight0Direction);
+		glLightf(GL_LIGHT0, GL_SPOT_CUTOFF, 45);
+		glLightf(GL_LIGHT0, GL_SPOT_EXPONENT, 20);
+
+		float spotLight1Direction[] = { -1, 0.5, -1 };
+		glLightfv(GL_LIGHT1, GL_POSITION, lightSource1Position);
+		glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, spotLight1Direction);
+		glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, 45);
+		glLightf(GL_LIGHT1, GL_SPOT_EXPONENT, 20);
+
+		float spotLight2Direction[] = { 0, -0.5, -1 };
+		glLightfv(GL_LIGHT2, GL_POSITION, lightSource2Position);
+		glLightfv(GL_LIGHT2, GL_SPOT_DIRECTION, spotLight2Direction);
+		glLightf(GL_LIGHT2, GL_SPOT_CUTOFF, 45);
+		glLightf(GL_LIGHT2, GL_SPOT_EXPONENT, 20);
+	}
+}
+
 void keyboard(unsigned char key, int x, int y) {
 	if (key == '1') {
 		isKey1Pressed = !isKey1Pressed;
+	}
+
+	if (key == '2') {
+		isKey2Pressed = !isKey2Pressed;
+	}
+
+	if (key == '3') {
+		lightSourceType = 3;
+	}
+
+	if (key == '4') {
+		lightSourceType = 4;
+	}
+
+	if (key == '5') {
+		lightSourceType = 5;
 	}
 }
 
@@ -157,6 +274,8 @@ void dirKeyboard(int key, int x, int y) {
 		key1CamZdist = 20;
 		key1CamXvec = 0;
 		key1CamRotateAngle = 0;
+
+		isKey2Pressed = false;
 	}
 }
 
@@ -301,7 +420,17 @@ void drawName() {
 		glutWireCube(1);
 		reverseScalef(3.375, 0.5, 0.5);
 		reverseTranslatef(secondCenterX + 1.4375, secondCenterY - 3.5, secondCenterZ);
+	}
 
+	{	// plane
+		glTranslatef(0, 0, -10);
+		glScalef(30, 30, 0.5);
+		glColor3f(1, 1, 1);
+		glutSolidCube(1);
+		glColor3f(0, 0, 0);
+		glutWireCube(1);
+		reverseScalef(30, 30, 0.5);
+		reverseTranslatef(0, 0, -20);
 	}
 }
 
