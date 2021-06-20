@@ -28,6 +28,7 @@ void reverseRotatef(float angle, float x, float y, float z);
 void reverseScalef(float x, float y, float z);
 void textureInit(const char* fileName);
 unsigned char* LoadMeshFromFile(const char* texFile);
+void torusRotateControl();
 void drawMyTorus(double r, double c, int rSeg, int cSeg);
 
 
@@ -38,6 +39,7 @@ bool key1CamXvecIncreasing = false;
 bool key1CamRotateAngleIncreasing = false;
 
 bool isKey2Pressed = false;
+float key2TorusAngle = 0;
 int lightSourceType = 0;
 
 int w = 50, h = 50;
@@ -91,11 +93,15 @@ void display() {
 
 	cameraControl();
 	lightControl(lightSourceType);
+	torusRotateControl();
+
 	glDisable(GL_TEXTURE_2D);
 	drawAssistantLine();
 	drawName();
 
+	glRotatef(key2TorusAngle, 0, 0, 1);
 	drawMyTorus(3, 8, 4, 6);
+	reverseRotatef(key2TorusAngle, 0, 0, 1);
 
 	glutSwapBuffers();
 	glutPostRedisplay();
@@ -314,6 +320,7 @@ void dirKeyboard(int key, int x, int y) {
 		key1CamRotateAngle = 0;
 
 		isKey2Pressed = false;
+		key2TorusAngle = 0;
 	}
 }
 
@@ -500,6 +507,16 @@ unsigned char* LoadMeshFromFile(const char* texFile) {
 	fclose(fp);
 
 	return image;
+}
+
+void torusRotateControl() {
+	if (isKey2Pressed) {
+		key2TorusAngle += 0.2;
+
+		if (key2TorusAngle > 360) {
+			key2TorusAngle = 0;
+		}
+	}
 }
 
 void drawMyTorus(double r, double c, int rSeg, int cSeg) {
