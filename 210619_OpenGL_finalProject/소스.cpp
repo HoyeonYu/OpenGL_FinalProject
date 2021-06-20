@@ -5,6 +5,7 @@
 #include <ctime>
 #include <cstdlib>
 #include <vector>
+#include "Mesh.h"
 #include "gl/glut.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "image.h"
@@ -31,7 +32,8 @@ unsigned char* LoadMeshFromFile(const char* texFile);
 void torusRotateControl();
 void torusSegmentControl();
 void drawMyTorus(double r, double c, int rSeg, int cSeg);
-
+void drawEgg(double r, double c, int rSeg, int cSeg);
+void catControl();
 
 bool isKey1Pressed = false;
 float key1CamZdist = 20, key1CamXvec = 0, key1CamRotateAngle = 0;
@@ -39,7 +41,7 @@ bool key1CamZdistIncreasing = false;
 bool key1CamXvecIncreasing = false;
 bool key1CamRotateAngleIncreasing = false;
 
-int lightSourceType = 0;
+int lightSourceType = 1;
 
 bool isKey7Pressed = false;
 float key7TorusAngle = 0;
@@ -47,6 +49,11 @@ float key7TorusAngle = 0;
 bool isKey8Pressed = false;
 float key8TorusSegment = 6;
 bool isKey8TorusSegmentIncreasing = false;
+
+bool isKey0Pressed = false;
+float key0CatPosition = 0;
+bool isKey0CatPositionIncreasing = false;
+Mesh meshHeart, meshCat;
 
 int w = 50, h = 50;
 
@@ -65,7 +72,7 @@ int main(int argc, char** argv) {
 	glutInitWindowPosition(100, 100);
 	glutCreateWindow("Final Project");
 	init();
-	textureInit(textureFileNameArr[0]);
+	textureInit(textureFileNameArr[lightSourceType]);
 	glutReshapeFunc(resize);
 	glutKeyboardFunc(keyboard);
 	glutSpecialFunc(dirKeyboard);
@@ -78,6 +85,8 @@ int main(int argc, char** argv) {
 void init() {
 	glClearColor(0, 0, 0, 0);
 	glEnable(GL_DEPTH_TEST);
+	meshHeart.LoadMesh("love.obj");
+	meshCat.LoadMesh("cat.obj");
 }
 
 void resize(int w, int h) {
@@ -99,15 +108,23 @@ void display() {
 
 	cameraControl();
 	lightControl(lightSourceType);
+	catControl();
 	torusRotateControl();
 	torusSegmentControl();
 
 	glDisable(GL_TEXTURE_2D);
-	drawAssistantLine();
-	drawName();
+
+	if (lightSourceType != 0) {
+		drawName();
+	}
 
 	glRotatef(key7TorusAngle, 0, 0, 1);
-	drawMyTorus(3, 8, 4, (int)key8TorusSegment);
+	drawMyTorus(1.5, 6, 4, (int)key8TorusSegment);
+
+	if (lightSourceType == 0) {
+		drawEgg(1.5, 6, 4, (int)key8TorusSegment);
+	}
+
 	reverseRotatef(key7TorusAngle, 0, 0, 1);
 
 	glutSwapBuffers();
@@ -321,6 +338,10 @@ void keyboard(unsigned char key, int x, int y) {
 	if (key == '8') {
 		isKey8Pressed = !isKey8Pressed;
 	}
+
+	if (key == '0') {
+		isKey0Pressed = !isKey0Pressed;
+	}
 }
 
 void dirKeyboard(int key, int x, int y) {
@@ -335,6 +356,9 @@ void dirKeyboard(int key, int x, int y) {
 
 		isKey8Pressed = false;
 		key8TorusSegment = 6;
+
+		isKey0Pressed = false;
+		key0CatPosition = 0;
 	}
 }
 
@@ -582,5 +606,63 @@ void drawMyTorus(double r, double c, int rSeg, int cSeg) {
 		}
 
 		glEnd();
+	}
+
+	glDisable(GL_TEXTURE_2D);
+}
+
+void drawEgg(double r, double c, int rSeg, int cSeg) {
+	const double PI = 3.1415926;
+	const double TAU = 2 * PI;
+
+	for (int j = 0; j <= cSeg; j++) {
+		double s = 0.5;
+		double t = j % (cSeg + 1);
+
+		double x = (c + r * cos(s * TAU / rSeg)) * cos(t * TAU / cSeg);
+		double y = (c + r * cos(s * TAU / rSeg)) * sin(t * TAU / cSeg);
+		double z = r * sin(s * TAU / rSeg);
+
+		glTranslatef(0.7 * x, 0.7 * y, 0.7 * z);
+		glutSolidSphere(2, 10, 10);
+		reverseTranslatef(0.7 * x, 0.7 * y, 0.7 * z);
+
+		if (j == 0) {
+			glTranslatef(1.8 * x - key0CatPosition, 1.8 * y, 1.8 * z);
+
+			if (isKey0CatPositionIncreasing) {
+				glRotatef(180, 0, 0, 1);
+			}
+
+			glRotatef(90, 1, 0, 0);
+			meshCat.RenderMesh(VECTOR3D(1, 0.4, 0.4), 0.01);
+			reverseRotatef(90, 1, 0, 0);
+
+			if (isKey0CatPositionIncreasing) {
+				reverseRotatef(180, 0, 0, 1);
+			}
+
+			reverseTranslatef(1.8 * x - key0CatPosition, 1.8 * y, 1.8 * z);
+		}
+	}
+}
+
+void catControl() {
+	if (isKey0Pressed) {
+		if (isKey0CatPositionIncreasing) {
+			key0CatPosition += 0.2;
+
+			if (key0CatPosition > 25) {
+				isKey0CatPositionIncreasing = false;
+			}
+		}
+
+		else {
+			key0CatPosition -= 0.2;
+
+			if (key0CatPosition < 0) {
+				isKey0CatPositionIncreasing = true;
+			}
+		}
 	}
 }
