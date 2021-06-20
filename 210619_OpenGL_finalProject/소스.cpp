@@ -4,6 +4,7 @@
 #include <cmath>
 #include <ctime>
 #include <cstdlib>
+#include <vector>
 #include "gl/glut.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "image.h"
@@ -27,6 +28,8 @@ void reverseRotatef(float angle, float x, float y, float z);
 void reverseScalef(float x, float y, float z);
 void textureInit(const char* fileName);
 unsigned char* LoadMeshFromFile(const char* texFile);
+void drawMyTorus(double r, double c, int rSeg, int cSeg);
+
 
 bool isKey1Pressed = false;
 float key1CamZdist = 20, key1CamXvec = 0, key1CamRotateAngle = 0;
@@ -35,7 +38,7 @@ bool key1CamXvecIncreasing = false;
 bool key1CamRotateAngleIncreasing = false;
 
 bool isKey2Pressed = false;
-int lightSourceType = 3;
+int lightSourceType = 0;
 
 int w = 50, h = 50;
 
@@ -43,7 +46,9 @@ unsigned char header[54];
 unsigned int dataPos;
 int width, height;
 unsigned int imageSize;
-const char* textureFileNameArr[3] = { "grass.jpg", "bamboo.png", "wall1.jpg" };
+
+const char* textureFileNameArr[3] = { "bamboo.png", "color3.jpg", "chess.png" };
+GLuint texID;
 
 int main(int argc, char** argv) {
 	glutInit(&argc, argv);
@@ -89,6 +94,8 @@ void display() {
 	glDisable(GL_TEXTURE_2D);
 	drawAssistantLine();
 	drawName();
+
+	drawMyTorus(3, 8, 4, 6);
 
 	glutSwapBuffers();
 	glutPostRedisplay();
@@ -204,7 +211,7 @@ void lightControl(int lightSourceType) {
 	float lightSource1Position[] = { 20, -10, 20, 1 };
 	float lightSource2Position[] = { 0, 10, 20, 1 };
 
-	if (lightSourceType == 3) {
+	if (lightSourceType == 0) {
 		// Point Light
 		glLightfv(GL_LIGHT0, GL_POSITION, lightSource0Position);
 		glLightf(GL_LIGHT0, GL_SPOT_CUTOFF, 180);
@@ -219,7 +226,7 @@ void lightControl(int lightSourceType) {
 		glLightf(GL_LIGHT2, GL_SPOT_EXPONENT, 0);
 	}
 
-	if (lightSourceType == 4) {
+	if (lightSourceType == 1) {
 		// Directional Light
 		lightSource0Position[3] = 0;
 		glRotatef(45, 1, 0, -1);
@@ -240,7 +247,7 @@ void lightControl(int lightSourceType) {
 		reverseRotatef(45, -1, 0, -1);
 	}
 
-	if (lightSourceType == 5) {
+	if (lightSourceType == 2) {
 		// Spot Light
 		float spotLight0Direction[] = { 1, 0.5, -1 };
 		glLightfv(GL_LIGHT0, GL_POSITION, lightSource0Position);
@@ -260,6 +267,18 @@ void lightControl(int lightSourceType) {
 		glLightf(GL_LIGHT2, GL_SPOT_CUTOFF, 45);
 		glLightf(GL_LIGHT2, GL_SPOT_EXPONENT, 20);
 	}
+
+	GLfloat material_ambient[] = { 0.1, 0.1, 0.1, 1 };
+	GLfloat material_diffuse[] = { 1, 1, 1, 1 };
+	GLfloat material_specular[] = { 0, 0, 0, 1 };
+	GLfloat material_shininess[] = { 5 };
+	GLfloat material_emission[] = { 0.2, 0.2, 0.2, 1 };
+
+	glMaterialfv(GL_FRONT, GL_AMBIENT, material_ambient);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, material_diffuse);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, material_specular);
+	glMaterialfv(GL_FRONT, GL_SHININESS, material_shininess);
+	glMaterialfv(GL_FRONT, GL_EMISSION, material_emission);
 }
 
 void keyboard(unsigned char key, int x, int y) {
@@ -272,17 +291,17 @@ void keyboard(unsigned char key, int x, int y) {
 	}
 
 	if (key == '3') {
-		lightSourceType = 3;
+		lightSourceType = 0;
 		textureInit(textureFileNameArr[0]);
 	}
 
 	if (key == '4') {
-		lightSourceType = 4;
+		lightSourceType = 1;
 		textureInit(textureFileNameArr[1]);
 	}
 
 	if (key == '5') {
-		lightSourceType = 5;
+		lightSourceType = 2;
 		textureInit(textureFileNameArr[2]);
 	}
 }
@@ -338,8 +357,6 @@ void drawName() {
 		const float firstCenterX = -3.5;
 		const float firstCenterY = 0.5;
 		const float firstCenterZ = 0;
-
-		//glBindTexture(GL_TEXTURE_2D, texFlake);
 
 		glTranslatef(firstCenterX, firstCenterY + 2, firstCenterZ);
 		glRotatef(-90, 1, 0, 0);
@@ -441,36 +458,6 @@ void drawName() {
 		glutWireCube(1);
 		reverseScalef(3.375, 0.5, 0.5);
 		reverseTranslatef(secondCenterX + 1.4375, secondCenterY - 3.5, secondCenterZ);
-
-	}
-
-	{	// Surround Cylinder
-		glTranslatef(0, 0, -12);
-
-		gluQuadricDrawStyle(gluNewQuadric(), GLU_FILL);
-		gluCylinder(gluNewQuadric(), 10, 20, 30, 50, 50);
-		reverseTranslatef(0, 0, -12);
-	}
-
-	{	// Background Texture
-		glEnable(GL_TEXTURE_2D);
-
-		glColor3f(1.0, 1.0, 1.0);
-		glBegin(GL_POLYGON);
-
-		glTexCoord2f(0.0, 1.0);
-		glVertex3f(-15, -15, -8);
-
-		glTexCoord2f(0.0, 0.0);
-		glVertex3f(-15, 15, -8);
-
-		glTexCoord2f(1.0, 0.0);
-		glVertex3f(15, 15, -8);
-
-		glTexCoord2f(1.0, 1.0);
-		glVertex3f(15, -15, -8);
-
-		glEnd();
 	}
 }
 
@@ -490,11 +477,8 @@ void textureInit(const char* fileName) {
 	unsigned char* bitmap;
 	bitmap = LoadMeshFromFile((char*)fileName);
 
-	GLuint texID;
 	glGenTextures(1, &texID);
-	glBindTexture(GL_TEXTURE_2D, texID);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0,
-		GL_RGBA, GL_UNSIGNED_BYTE, bitmap);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, bitmap);
 
 	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -503,17 +487,49 @@ void textureInit(const char* fileName) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 }
 
-unsigned char* LoadMeshFromFile(const char* texFile)
-{
-	GLuint texture;
-	glGenTextures(1, &texture);
+unsigned char* LoadMeshFromFile(const char* texFile) {
 	FILE* fp = NULL;
+
 	if (fopen_s(&fp, texFile, "rb")) {
-		printf("ERROR : No %s. \n fail to bind %d\n", texFile, texture);
+		printf("ERROR : No %s. \n fail to bind %d\n", texFile);
 		return NULL;
 	}
+
 	int channel;
 	unsigned char* image = stbi_load_from_file(fp, &width, &height, &channel, 4);
 	fclose(fp);
+
 	return image;
+}
+
+void drawMyTorus(double r, double c, int rSeg, int cSeg) {
+	glEnable(GL_TEXTURE_2D);
+	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+	const double PI = 3.1415926;
+	const double TAU = 2 * PI;
+
+	for (int i = 0; i < rSeg; i++) {
+		glBegin(GL_QUAD_STRIP);
+
+		for (int j = 0; j <= cSeg; j++) {
+			for (int k = 0; k <= 1; k++) {
+				double s = (i + k) % rSeg + 0.5;
+				double t = j % (cSeg + 1);
+
+				double x = (c + r * cos(s * TAU / rSeg)) * cos(t * TAU / cSeg);
+				double y = (c + r * cos(s * TAU / rSeg)) * sin(t * TAU / cSeg);
+				double z = r * sin(s * TAU / rSeg);
+
+				double u = (i + k) / (float)rSeg;
+				double v = t / (float)cSeg;
+
+				glTexCoord2d(u, v);
+				glNormal3f(2 * x, 2 * y, 2 * z);
+				glVertex3d(2 * x, 2 * y, 2 * z);
+			}
+		}
+
+		glEnd();
+	}
 }
