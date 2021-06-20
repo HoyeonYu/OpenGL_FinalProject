@@ -5,7 +5,11 @@
 #include <ctime>
 #include <cstdlib>
 #include "gl/glut.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "image.h"
 #define MAX_WINDOW 800
+#define DIMX	255
+#define DIMY	256
 using namespace std;
 
 void init();
@@ -21,6 +25,8 @@ void drawName();
 void reverseTranslatef(float x, float y, float z);
 void reverseRotatef(float angle, float x, float y, float z);
 void reverseScalef(float x, float y, float z);
+void textureInit();
+unsigned char* LoadMeshFromFile(const char* texFile);
 
 bool isKey1Pressed = false;
 float key1CamZdist = 20, key1CamXvec = 0, key1CamRotateAngle = 0;
@@ -31,6 +37,13 @@ bool key1CamRotateAngleIncreasing = false;
 bool isKey2Pressed = false;
 int lightSourceType = 3;
 
+int w = 50, h = 50;
+
+unsigned char header[54];
+unsigned int dataPos;
+int width, height;
+unsigned int imageSize;
+
 int main(int argc, char** argv) {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
@@ -38,6 +51,7 @@ int main(int argc, char** argv) {
 	glutInitWindowPosition(100, 100);
 	glutCreateWindow("Final Project");
 	init();
+	textureInit();
 	glutReshapeFunc(resize);
 	glutKeyboardFunc(keyboard);
 	glutSpecialFunc(dirKeyboard);
@@ -64,15 +78,14 @@ void resize(int w, int h) {
 
 void display() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glEnable(GL_DEPTH_TEST);
-	lightInit();
-
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
+	lightInit();
+
 	cameraControl();
 	lightControl(lightSourceType);
-
+	glDisable(GL_TEXTURE_2D);
 	drawAssistantLine();
 	drawName();
 
@@ -82,7 +95,9 @@ void display() {
 
 void cameraControl() {
 	glRotatef(key1CamRotateAngle, 0, 1, 0);
-	gluLookAt(0, key1CamRotateAngle / 4, key1CamZdist, 0, 0, 0, key1CamXvec, 1, 0);
+	glTranslatef(0, key1CamZdist / 5, 0);
+	gluLookAt(0, 0, key1CamZdist, 0, 0, 0, key1CamXvec, 1, 0);
+	reverseTranslatef(0, key1CamZdist / 5, 0);
 	reverseRotatef(key1CamRotateAngle, 0, 1, 0);
 
 	if (isKey1Pressed) {
@@ -320,6 +335,8 @@ void drawName() {
 		const float firstCenterY = 0.5;
 		const float firstCenterZ = 0;
 
+		//glBindTexture(GL_TEXTURE_2D, texFlake);
+
 		glTranslatef(firstCenterX, firstCenterY + 2, firstCenterZ);
 		glRotatef(-90, 1, 0, 0);
 		glColor3f(1, 1, 1);
@@ -420,13 +437,36 @@ void drawName() {
 		glutWireCube(1);
 		reverseScalef(3.375, 0.5, 0.5);
 		reverseTranslatef(secondCenterX + 1.4375, secondCenterY - 3.5, secondCenterZ);
+
 	}
 
-	{	// Background
-		glTranslatef(0, 0, -10);
+	{	// Surround Cylinder
+		glTranslatef(0, 0, -12);
 
 		gluQuadricDrawStyle(gluNewQuadric(), GLU_FILL);
-		gluCylinder(gluNewQuadric(), 15, 25, 35, 20, 20);
+		gluCylinder(gluNewQuadric(), 10, 20, 30, 50, 50);
+		reverseTranslatef(0, 0, -12);
+	}
+
+	{	// Background Texture
+		glEnable(GL_TEXTURE_2D);
+
+		glColor3f(1.0, 1.0, 1.0);
+		glBegin(GL_POLYGON);
+
+		glTexCoord2f(0.0, 1.0);
+		glVertex3f(-15, -15, -8);
+
+		glTexCoord2f(0.0, 0.0);
+		glVertex3f(-15, 15, -8);
+
+		glTexCoord2f(1.0, 0.0);
+		glVertex3f(15, 15, -8);
+
+		glTexCoord2f(1.0, 1.0);
+		glVertex3f(15, -15, -8);
+
+		glEnd();
 	}
 }
 
@@ -440,4 +480,36 @@ void reverseRotatef(float angle, float x, float y, float z) {
 
 void reverseScalef(float x, float y, float z) {
 	glScalef(1 / x, 1 / y, 1 / z);
+}
+
+void textureInit() {
+	unsigned char* bitmap;
+	bitmap = LoadMeshFromFile((char*)"bamboo.png");
+
+	GLuint texID;
+	glGenTextures(1, &texID);
+	glBindTexture(GL_TEXTURE_2D, texID);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0,
+		GL_RGBA, GL_UNSIGNED_BYTE, bitmap);
+
+	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+}
+
+unsigned char* LoadMeshFromFile(const char* texFile)
+{
+	GLuint texture;
+	glGenTextures(1, &texture);
+	FILE* fp = NULL;
+	if (fopen_s(&fp, texFile, "rb")) {
+		printf("ERROR : No %s. \n fail to bind %d\n", texFile, texture);
+		return NULL;
+	}
+	int channel;
+	unsigned char* image = stbi_load_from_file(fp, &width, &height, &channel, 4);
+	fclose(fp);
+	return image;
 }
