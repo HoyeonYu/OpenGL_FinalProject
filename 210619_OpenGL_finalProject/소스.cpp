@@ -29,6 +29,7 @@ void reverseScalef(float x, float y, float z);
 void textureInit(const char* fileName);
 unsigned char* LoadMeshFromFile(const char* texFile);
 void torusRotateControl();
+void torusSegmentControl();
 void drawMyTorus(double r, double c, int rSeg, int cSeg);
 
 
@@ -38,9 +39,14 @@ bool key1CamZdistIncreasing = false;
 bool key1CamXvecIncreasing = false;
 bool key1CamRotateAngleIncreasing = false;
 
-bool isKey2Pressed = false;
-float key2TorusAngle = 0;
 int lightSourceType = 0;
+
+bool isKey7Pressed = false;
+float key7TorusAngle = 0;
+
+bool isKey8Pressed = false;
+float key8TorusSegment = 6;
+bool isKey8TorusSegmentIncreasing = false;
 
 int w = 50, h = 50;
 
@@ -94,14 +100,15 @@ void display() {
 	cameraControl();
 	lightControl(lightSourceType);
 	torusRotateControl();
+	torusSegmentControl();
 
 	glDisable(GL_TEXTURE_2D);
 	drawAssistantLine();
 	drawName();
 
-	glRotatef(key2TorusAngle, 0, 0, 1);
-	drawMyTorus(3, 8, 4, 6);
-	reverseRotatef(key2TorusAngle, 0, 0, 1);
+	glRotatef(key7TorusAngle, 0, 0, 1);
+	drawMyTorus(3, 8, 4, (int)key8TorusSegment);
+	reverseRotatef(key7TorusAngle, 0, 0, 1);
 
 	glutSwapBuffers();
 	glutPostRedisplay();
@@ -292,10 +299,6 @@ void keyboard(unsigned char key, int x, int y) {
 		isKey1Pressed = !isKey1Pressed;
 	}
 
-	if (key == '2') {
-		isKey2Pressed = !isKey2Pressed;
-	}
-
 	if (key == '3') {
 		lightSourceType = 0;
 		textureInit(textureFileNameArr[0]);
@@ -310,6 +313,14 @@ void keyboard(unsigned char key, int x, int y) {
 		lightSourceType = 2;
 		textureInit(textureFileNameArr[2]);
 	}
+
+	if (key == '7') {
+		isKey7Pressed = !isKey7Pressed;
+	}
+
+	if (key == '8') {
+		isKey8Pressed = !isKey8Pressed;
+	}
 }
 
 void dirKeyboard(int key, int x, int y) {
@@ -319,8 +330,11 @@ void dirKeyboard(int key, int x, int y) {
 		key1CamXvec = 0;
 		key1CamRotateAngle = 0;
 
-		isKey2Pressed = false;
-		key2TorusAngle = 0;
+		isKey7Pressed = false;
+		key7TorusAngle = 0;
+
+		isKey8Pressed = false;
+		key8TorusSegment = 6;
 	}
 }
 
@@ -510,11 +524,31 @@ unsigned char* LoadMeshFromFile(const char* texFile) {
 }
 
 void torusRotateControl() {
-	if (isKey2Pressed) {
-		key2TorusAngle += 0.2;
+	if (isKey7Pressed) {
+		key7TorusAngle += 0.2;
 
-		if (key2TorusAngle > 360) {
-			key2TorusAngle = 0;
+		if (key7TorusAngle > 360) {
+			key7TorusAngle = 0;
+		}
+	}
+}
+
+void torusSegmentControl() {
+	if (isKey8Pressed) {
+		if (isKey8TorusSegmentIncreasing) {
+			key8TorusSegment += 0.01;
+
+			if (key8TorusSegment > 10) {
+				isKey8TorusSegmentIncreasing = false;
+			}
+		}
+
+		else {
+			key8TorusSegment -= 0.01;
+
+			if (key8TorusSegment < 3) {
+				isKey8TorusSegmentIncreasing = true;
+			}
 		}
 	}
 }
