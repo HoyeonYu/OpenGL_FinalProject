@@ -25,7 +25,7 @@ void drawName();
 void reverseTranslatef(float x, float y, float z);
 void reverseRotatef(float angle, float x, float y, float z);
 void reverseScalef(float x, float y, float z);
-void textureInit();
+void textureInit(const char* fileName);
 unsigned char* LoadMeshFromFile(const char* texFile);
 
 bool isKey1Pressed = false;
@@ -43,6 +43,7 @@ unsigned char header[54];
 unsigned int dataPos;
 int width, height;
 unsigned int imageSize;
+const char* textureFileNameArr[3] = { "grass.jpg", "bamboo.png", "wall1.jpg" };
 
 int main(int argc, char** argv) {
 	glutInit(&argc, argv);
@@ -51,7 +52,7 @@ int main(int argc, char** argv) {
 	glutInitWindowPosition(100, 100);
 	glutCreateWindow("Final Project");
 	init();
-	textureInit();
+	textureInit(textureFileNameArr[0]);
 	glutReshapeFunc(resize);
 	glutKeyboardFunc(keyboard);
 	glutSpecialFunc(dirKeyboard);
@@ -272,14 +273,17 @@ void keyboard(unsigned char key, int x, int y) {
 
 	if (key == '3') {
 		lightSourceType = 3;
+		textureInit(textureFileNameArr[0]);
 	}
 
 	if (key == '4') {
 		lightSourceType = 4;
+		textureInit(textureFileNameArr[1]);
 	}
 
 	if (key == '5') {
 		lightSourceType = 5;
+		textureInit(textureFileNameArr[2]);
 	}
 }
 
@@ -482,9 +486,9 @@ void reverseScalef(float x, float y, float z) {
 	glScalef(1 / x, 1 / y, 1 / z);
 }
 
-void textureInit() {
+void textureInit(const char* fileName) {
 	unsigned char* bitmap;
-	bitmap = LoadMeshFromFile((char*)"bamboo.png");
+	bitmap = LoadMeshFromFile((char*)fileName);
 
 	GLuint texID;
 	glGenTextures(1, &texID);
